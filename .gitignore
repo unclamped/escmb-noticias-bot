@@ -1,0 +1,6 @@
+.wwebjs_auth/
+.wwebjs_cache/
+node_modules/
+index.js
+ultimo_articulo.txt
+package-lock.json
