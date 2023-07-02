@@ -4,11 +4,11 @@ import { Client, LocalAuth, MessageMedia, MessageAck } from 'whatsapp-web.js';
 import * as cheerio from 'cheerio';
 import * as qrcode from 'qrcode-terminal';
 
-const db = new sqlite3.Database('posts.db');
-db.run(`CREATE TABLE IF NOT EXISTS posts (url TEXT PRIMARY KEY)`);
-
 (async () => {
   try {
+    const db = new sqlite3.Database('posts.db');
+    db.run(`CREATE TABLE IF NOT EXISTS posts (url TEXT PRIMARY KEY)`);
+
     const client = new Client({
       authStrategy: new LocalAuth(),
       puppeteer: {
@@ -39,10 +39,9 @@ db.run(`CREATE TABLE IF NOT EXISTS posts (url TEXT PRIMARY KEY)`);
             );
 
         const yaExiste = await getUrlExistsPromise(url);
-        console.log(yaExiste)
         
         if (yaExiste) {
-          return;
+          continue;
         }
 
         const titulo = main$(articulo).find('h4.entry-title').text();
@@ -51,25 +50,33 @@ db.run(`CREATE TABLE IF NOT EXISTS posts (url TEXT PRIMARY KEY)`);
 
         const media = await MessageMedia.fromUrl(imagen!);
         let mensaje = client.sendMessage('120363158664052984@g.us', media, {caption: `${titulo}\n\n${previewTexto}\n\n${url}`});
-        pendiente = (await mensaje).id.id;
-        while (!enviado) {}
+        // pendiente = (await mensaje).id.id;
+        // while (!enviado) {}
+
         
         db.run('INSERT INTO posts (url) VALUES (?)', [url])
-        enviado = false;
+        // enviado = false;
       }
+      client.destroy()
+      db.close()
+      process.exit()
     });
 
-    client.on('message_ack', async (ackMessage, ack) => {
+    // FIXME: Acks dont work for some reason, fuck this.
+    /* client.on('message_ack', async (ackMessage, ack) => {
       console.log(ack)
-      if (ack === MessageAck.ACK_DEVICE && ackMessage.id.id === pendiente) {
+      if (ack === MessageAck.ACK_SERVER && ackMessage.id.id === pendiente) {
         enviado = true;
       }
-    });
+    }); */
+
+    /* client.on('message_create', async (message) => {
+      console.log(message)
+    }) */
 
     client.initialize();
   } catch (err) {
     console.error(err);
-    db.close();
     process.exit();
   }
 })();
