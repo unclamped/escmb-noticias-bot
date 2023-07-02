@@ -26,9 +26,10 @@ client.on('qr', qr => {
 
 client.on('ready', () => {
     console.log('Client is ready!');
-    client.on('message', message => {
-        console.log(message);
-    });    
+    client.on('message_ack', async (ackMessage, ack) => {
+        console.log(ack)
+        console.log(ackMessage)
+    });
 });
 
 client.initialize();
