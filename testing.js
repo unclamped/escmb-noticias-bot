@@ -12,7 +12,7 @@ db.get('SELECT EXISTS(SELECT 1 FROM posts WHERE url = ?) AS urlExiste', ['h'], a
     }
 })
 
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, LocalAuth, MessageAck } = require('whatsapp-web.js');
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
@@ -24,12 +24,16 @@ client.on('qr', qr => {
     qrcode.generate(qr, {small: true});
 });
 
-client.on('ready', () => {
+client.on('ready', async () => {
     console.log('Client is ready!');
-    client.on('message_ack', async (ackMessage, ack) => {
-        console.log(ack)
-        console.log(ackMessage)
-    });
+    await client.sendMessage('120363158664052984@g.us', 'h');
+});
+
+client.on('message_ack', async (ackMessage, ack) => {
+    console.log(ack)
+    if (ack === MessageAck.ACK_SERVER) {
+      console.log('aight this was sent')
+    }
 });
 
 client.initialize();

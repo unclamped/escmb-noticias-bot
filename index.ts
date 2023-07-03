@@ -12,7 +12,7 @@ import * as qrcode from 'qrcode-terminal';
     const client = new Client({
       authStrategy: new LocalAuth(),
       puppeteer: {
-        headless: true
+        headless: false
       }
     });
 
@@ -24,14 +24,15 @@ import * as qrcode from 'qrcode-terminal';
     });
 
     client.on('ready', async () => {
+      console.log('bready steady go')
       const respuestaMain = await axios.get('https://mb.unc.edu.ar/');
       const main$ = cheerio.load(respuestaMain.data);
       const articulos = main$('article.post.fusion-column.column.col.col-lg-4.col-md-4.col-sm-4');
+      let iteration: number = 0;
 
-      for (let i = articulos.length - 1; i >= 0; i--) {
-        const articulo = articulos.eq(i);
-
+      for (const articulo of articulos.toArray().reverse()) {
         const url = main$(articulo).find('a.hover-type-none').attr('href') as string;
+        console.log('running iteration for ' + url)
 
         const getUrlExistsPromise = (url: string) => new Promise((resolve, reject) => 
           db.get('SELECT EXISTS(SELECT 1 FROM posts WHERE url = ?) AS urlExiste', [url],
@@ -41,6 +42,7 @@ import * as qrcode from 'qrcode-terminal';
         const yaExiste = await getUrlExistsPromise(url);
         
         if (yaExiste) {
+          console.log('skipping iteration ' + url)
           continue;
         }
 
@@ -49,30 +51,25 @@ import * as qrcode from 'qrcode-terminal';
         const imagen = main$(articulo).find('img.attachment-full.size-full').attr('src');
 
         const media = await MessageMedia.fromUrl(imagen!);
-        let mensaje = client.sendMessage('120363158664052984@g.us', media, {caption: `${titulo}\n\n${previewTexto}\n\n${url}`});
-        // pendiente = (await mensaje).id.id;
-        // while (!enviado) {}
+        let mensaje = await client.sendMessage('120363158664052984@g.us', media, {caption: `${titulo}\n\n${previewTexto}\n\n${url}`});
+        pendiente = mensaje.id.id;
 
-        
         db.run('INSERT INTO posts (url) VALUES (?)', [url])
-        // enviado = false;
+        enviado = false;
+        console.log('finished iteration ' + url)
       }
+      console.log('exiting')
       client.destroy()
       db.close()
       process.exit()
     });
 
-    // FIXME: Acks dont work for some reason, fuck this.
-    /* client.on('message_ack', async (ackMessage, ack) => {
-      console.log(ack)
+    client.on('message_ack', async (ackMessage, ack) => {
+      console.log('ack ' + ack)
       if (ack === MessageAck.ACK_SERVER && ackMessage.id.id === pendiente) {
         enviado = true;
       }
-    }); */
-
-    /* client.on('message_create', async (message) => {
-      console.log(message)
-    }) */
+    });
 
     client.initialize();
   } catch (err) {
