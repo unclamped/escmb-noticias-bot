@@ -4,3 +4,4 @@ node_modules/
 index.js
 ultimo_articulo.txt
 package-lock.json
+posts.db
