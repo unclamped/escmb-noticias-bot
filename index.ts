@@ -21,7 +21,6 @@ try {
 
 	const enviarArticulo = async (articulos: cheerio.Element[], $: cheerio.CheerioAPI) => {
 		if (articulos.length === 0) {
-			console.log('exiting');
 			await client.destroy();
 			db.close();
 			process.exit();
@@ -57,7 +56,6 @@ try {
 	});
 
 	client.on('ready', async () => {
-		console.log('bready steady go');
 		main$ = cheerio.load(await (await fetch('https://mb.unc.edu.ar/')).text());
 		articulos = main$('article.post.fusion-column.column.col.col-lg-4.col-md-4.col-sm-4').toArray().reverse();
 
@@ -65,7 +63,6 @@ try {
 	});
 
 	client.on('message_ack', async (ackMessage, ack) => {
-		console.log('ack ' + ack);
 		if (ack === MessageAck.ACK_SERVER && ackMessage.id.id === articuloPendienteID) {
 			articuloPendienteID = "";
 			db.run('INSERT INTO posts (url) VALUES (?)', [articuloPendienteURL]);
