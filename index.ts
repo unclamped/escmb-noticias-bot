@@ -36,7 +36,10 @@ try {
 			(error, row: any) => error ? reject(error) : resolve(row.URLExiste === 1))
 			);
 
-		if (await yaExisteFunc(articuloPendienteURL)) return;
+		if (await yaExisteFunc(articuloPendienteURL)) {
+			enviarArticulo(articulos, $);
+			return;
+		}
 
 		const titulo = $(articulo).find('h4.entry-title').text();
 		const previewTexto = $(articulo).find('p:not(.meta)').first().text();
@@ -57,40 +60,6 @@ try {
 		articulos = main$('article.post.fusion-column.column.col.col-lg-4.col-md-4.col-sm-4').toArray().reverse();
 
 		enviarArticulo(articulos, main$);
-
-	/* for (const articulo of articulos.toArray().reverse()) {
-		const url = main$(articulo).find('a.hover-type-none').attr('href') as string;
-		console.log('running iteration for ' + url)
-
-		const getUrlExistsPromise = (url: string) => new Promise((resolve, reject) => 
-		db.get('SELECT EXISTS(SELECT 1 FROM posts WHERE url = ?) AS urlExiste', [url],
-			(error, row: any) => error ? reject(error) : resolve(row.urlExiste === 1))
-			);
-
-		const yaExiste = await getUrlExistsPromise(url);
-		
-		if (yaExiste) {
-		console.log('skipping iteration ' + url)
-		continue;
-		}
-
-		const titulo = main$(articulo).find('h4.entry-title').text();
-		const previewTexto = main$(articulo).find('p:not(.meta)').first().text();
-		const imagen = main$(articulo).find('img.attachment-full.size-full').attr('src');
-
-		const media = await MessageMedia.fromUrl(imagen!);
-		let mensaje = await client.sendMessage('120363158664052984@g.us', media, {caption: `${titulo}\n\n${previewTexto}\n\n${url}`});
-		pendiente = mensaje.id.id;
-
-		while (!enviado) {
-		setTimeout(() => {}, 1000)
-		}
-
-		db.run('INSERT INTO posts (url) VALUES (?)', [url])
-		enviado = false;
-		console.log('finished iteration ' + url)
-	} */
-
 	});
 
 	client.on('message_ack', async (ackMessage, ack) => {
