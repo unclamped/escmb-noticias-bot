@@ -1,22 +1,11 @@
 const qrcode = require('qrcode-terminal');
 const sqlite3 = require('sqlite3')
 
-const db = new sqlite3.Database('posts.db');
-db.run(`CREATE TABLE IF NOT EXISTS posts (url TEXT PRIMARY KEY)`);
-
-db.get('SELECT EXISTS(SELECT 1 FROM posts WHERE url = ?) AS urlExiste', ['h'], async (error, row) => {
-    console.log(row)
-    console.log(row.urlExiste)
-    if (row.urlExiste === 1) {
-      return;
-    }
-})
-
 const { Client, LocalAuth, MessageAck } = require('whatsapp-web.js');
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        headless: false
+        headless: true
     }
 });
 
@@ -29,11 +18,8 @@ client.on('ready', async () => {
     await client.sendMessage('120363158664052984@g.us', 'h');
 });
 
-client.on('message_ack', async (ackMessage, ack) => {
-    console.log(ack)
-    if (ack === MessageAck.ACK_SERVER) {
-      console.log('aight this was sent')
-    }
+client.on('message', msg => {
+    console.log(msg)
 });
 
 client.initialize();

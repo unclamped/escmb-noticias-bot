@@ -46,7 +46,9 @@ try {
 		const imagen = $(articulo).find('img.attachment-full.size-full').attr('src');
 
 		const media = await MessageMedia.fromUrl(imagen!);
-		let mensaje = await client.sendMessage('120363158664052984@g.us', media, {caption: `${titulo}\n\n${previewTexto}\n\n${articuloPendienteURL}`});
+		// 120363159253802611@g.us <- grupo normal
+		// 120363158664052984@g.us <- grupo basurero
+		let mensaje = await client.sendMessage('120363159253802611@g.us', media, {caption: `${titulo}\n\n${previewTexto}\n\n${articuloPendienteURL}`});
 		articuloPendienteID = mensaje.id.id;
 	};
 
