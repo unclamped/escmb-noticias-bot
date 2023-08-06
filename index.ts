@@ -53,7 +53,7 @@ try {
 
 	client.on('ready', async () => {
 		console.log('bready steady go');
-		main$ = cheerio.load(await (await fetch('https://mb.unc.edu.ar/')).text(	));
+		main$ = cheerio.load(await (await fetch('https://mb.unc.edu.ar/')).text());
 		articulos = main$('article.post.fusion-column.column.col.col-lg-4.col-md-4.col-sm-4').toArray().reverse();
 
 		enviarArticulo(articulos, main$);
