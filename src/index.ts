@@ -1,5 +1,6 @@
-import * as sqlite3 from 'sqlite3';
-import { Client, LocalAuth, MessageMedia, MessageAck } from 'whatsapp-web.js';
+import sqlite3 from 'sqlite3';
+import pkg from 'whatsapp-web.js'
+const { Client, LocalAuth, MessageMedia, MessageAck } = pkg;
 import * as cheerio from 'cheerio';
 import * as qrcode from 'qrcode-terminal';
 
