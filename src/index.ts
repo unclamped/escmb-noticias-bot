@@ -8,21 +8,45 @@ try {
 	const db = new sqlite3.Database('posts.db');
 	db.run(`CREATE TABLE IF NOT EXISTS posts (url TEXT PRIMARY KEY)`);
 
-	const client = new Client({
-		authStrategy: new LocalAuth(),
-		puppeteer: {
-			headless: true
-		}
-	});
-
 	let articuloPendienteID: string;
 	let articuloPendienteURL: string;
 	let main$: cheerio.CheerioAPI;
 	let articulos: cheerio.Element[];
 
+	let client: any;
+	let clientInit: boolean;
+
+	const iniciarWA = async () => {
+		const client = new Client({
+			authStrategy: new LocalAuth(),
+			puppeteer: {
+				headless: true
+			}
+		});
+
+		client.on('qr', (qr: string) => {
+			qrcode.generate(qr, {small: true});
+		});
+	
+		client.on('ready', async () => {
+			clientInit = true;
+		});
+	
+		client.on('message_ack', async (ackMessage: { id: { id: string; }; }, ack: pkg.MessageAck) => {
+			if (ack === MessageAck.ACK_SERVER && ackMessage.id.id === articuloPendienteID) {
+				articuloPendienteID = "";
+				db.run('INSERT INTO posts (url) VALUES (?)', [articuloPendienteURL]);
+				articuloPendienteURL = "";
+				enviarArticulo(articulos, main$);
+			};
+		});
+
+		client.initialize();
+	}
+
 	const enviarArticulo = async (articulos: cheerio.Element[], $: cheerio.CheerioAPI) => {
 		if (articulos.length === 0) {
-			await client.destroy();
+			if (clientInit) await client.destroy();
 			db.close();
 			process.exit();
 		}; // Se acabaron los articulos
@@ -41,6 +65,8 @@ try {
 			return;
 		}
 
+		if (!clientInit) iniciarWA();
+
 		const titulo = $(articulo).find('h4.entry-title').text();
 		const previewTexto = $(articulo).find('p:not(.meta)').first().text();
 		const imagen = $(articulo).find('img.attachment-full.size-full').attr('src');
@@ -52,27 +78,10 @@ try {
 		articuloPendienteID = mensaje.id.id;
 	};
 
-	client.on('qr', qr => {
-		qrcode.generate(qr, {small: true});
-	});
-
-	client.on('ready', async () => {
-		main$ = cheerio.load(await (await fetch('https://mb.unc.edu.ar/')).text());
-		articulos = main$('article.post.fusion-column.column.col.col-lg-4.col-md-4.col-sm-4').toArray().reverse();
-
-		enviarArticulo(articulos, main$);
-	});
-
-	client.on('message_ack', async (ackMessage, ack) => {
-		if (ack === MessageAck.ACK_SERVER && ackMessage.id.id === articuloPendienteID) {
-			articuloPendienteID = "";
-			db.run('INSERT INTO posts (url) VALUES (?)', [articuloPendienteURL]);
-			articuloPendienteURL = "";
-			enviarArticulo(articulos, main$);
-		};
-	});
-
-	client.initialize();
+	main$ = cheerio.load(await (await fetch('https://mb.unc.edu.ar/')).text());
+	articulos = main$('article.post.fusion-column.column.col.col-lg-4.col-md-4.col-sm-4').toArray().reverse();
+	
+	enviarArticulo(articulos, main$)
 } catch (err) {
 	console.error(err);
 	process.exit();
